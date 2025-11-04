@@ -1,0 +1,131 @@
+# ==============================================================================
+# GKE Cluster Configuration Example
+# ==============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# cp terraform.tfvars.example terraform.tfvars
+
+# ------------------------------------------------------------------------------
+# Project Configuration
+# ------------------------------------------------------------------------------
+gke_project_id      = "your-gke-project-id"      # Project where GKE cluster will be created
+vpc_host_project_id = "your-vpc-host-project-id" # Project where shared VPC is hosted
+
+# ------------------------------------------------------------------------------
+# Region and Zones
+# ------------------------------------------------------------------------------
+region = "us-central1" # GCP region for the cluster
+
+# Optional: Specify specific zones. If not specified, all zones in the region will be used
+# zones = ["us-central1-a", "us-central1-b", "us-central1-c"]
+zones = []
+
+# ------------------------------------------------------------------------------
+# Network Configuration
+# ------------------------------------------------------------------------------
+network_name = "shared-vpc-network" # Name of the VPC network in the host project
+subnet_name  = "gke-subnet"         # Name of the primary subnet for nodes
+
+# Secondary IP ranges for pods and services
+# These must already exist in your subnet
+pods_secondary_range_name     = "pods-secondary-range"     # Name of secondary range for pods
+services_secondary_range_name = "services-secondary-range" # Name of secondary range for services
+
+# ------------------------------------------------------------------------------
+# Cluster Configuration
+# ------------------------------------------------------------------------------
+cluster_name        = "my-gke-cluster"
+cluster_description = "GKE cluster with shared VPC for Node.js applications"
+
+# Kubernetes version - leave null to use latest from release channel
+kubernetes_version = null
+
+# Release channel: RAPID, REGULAR, or STABLE
+release_channel = "REGULAR"
+
+# ------------------------------------------------------------------------------
+# Private Cluster Configuration
+# ------------------------------------------------------------------------------
+enable_private_cluster  = true  # Enable private cluster features
+enable_private_nodes    = true  # Nodes will not have public IPs
+enable_private_endpoint = false # Master accessible via public and private IPs
+
+# CIDR block for the GKE master (must be /28)
+master_ipv4_cidr_block = "172.16.0.0/28"
+
+# Master authorized networks (IP ranges that can access the GKE control plane)
+# Add your VPN, office, or bastion host IP ranges here
+master_authorized_networks = [
+  # {
+  #   cidr_block   = "203.0.113.0/24"
+  #   display_name = "Office Network"
+  # },
+  # {
+  #   cidr_block   = "198.51.100.0/24"
+  #   display_name = "VPN Network"
+  # },
+]
+
+# ------------------------------------------------------------------------------
+# Node Pool Configuration
+# ------------------------------------------------------------------------------
+node_pool_name = "primary-node-pool"
+
+# Custom E2 machine type: 16 vCPU, 64GB RAM
+# Format: custom-{CPUS}-{MEMORY_MB}
+# 64GB = 65536 MB
+node_machine_type = "custom-16-65536"
+
+# Node disk configuration
+node_disk_size_gb = 100          # Disk size in GB
+node_disk_type    = "pd-balanced" # pd-standard, pd-balanced, or pd-ssd
+
+# Node image type
+node_image_type = "COS_CONTAINERD" # Container-Optimized OS with containerd
+
+# Autoscaling configuration (per zone)
+node_min_count     = 1  # Minimum nodes per zone
+node_max_count     = 10 # Maximum nodes per zone
+node_initial_count = 1  # Initial nodes per zone
+
+# ------------------------------------------------------------------------------
+# Feature Flags
+# ------------------------------------------------------------------------------
+enable_workload_identity    = true  # Enable Workload Identity
+enable_network_policy       = false # Enable Kubernetes Network Policy
+enable_binary_authorization = false # Enable Binary Authorization
+enable_cloud_nat            = true  # Enable Cloud NAT for private nodes
+enable_monitoring           = true  # Enable Google Cloud Monitoring
+enable_logging              = true  # Enable Google Cloud Logging
+
+# ------------------------------------------------------------------------------
+# Service Account Configuration
+# ------------------------------------------------------------------------------
+create_service_account = true # Create a custom service account for nodes
+service_account_name   = ""   # Leave empty to auto-generate name
+
+# ------------------------------------------------------------------------------
+# Labels and Tags
+# ------------------------------------------------------------------------------
+cluster_labels = {
+  environment = "production"
+  team        = "platform"
+  managed-by  = "terraform"
+}
+
+node_labels = {
+  workload = "nodejs"
+  tier     = "application"
+}
+
+node_tags = [
+  "gke-node",
+  "allow-health-checks",
+]
+
+# ------------------------------------------------------------------------------
+# Maintenance Window
+# ------------------------------------------------------------------------------
+# Maintenance window for cluster updates
+maintenance_start_time = "2024-01-01T03:00:00Z" # Start time in RFC3339 format
+maintenance_duration   = "4h"                    # Duration of maintenance window
+maintenance_recurrence = "FREQ=WEEKLY;BYDAY=SU"  # Recurrence (weekly on Sunday)
