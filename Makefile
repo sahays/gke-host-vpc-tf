@@ -107,6 +107,43 @@ clean:
 
 # Get kubectl credentials
 connect:
+	@echo "Checking prerequisites..."
+	@if ! command -v kubectl >/dev/null 2>&1; then \
+		echo ""; \
+		echo "❌ kubectl is not installed."; \
+		echo ""; \
+		echo "Install kubectl:"; \
+		echo "  macOS:   brew install kubectl"; \
+		echo "  Linux:   gcloud components install kubectl"; \
+		echo "  Windows: choco install kubernetes-cli"; \
+		echo ""; \
+		echo "Or follow: https://kubernetes.io/docs/tasks/tools/"; \
+		exit 1; \
+	fi
+	@if ! command -v gke-gcloud-auth-plugin >/dev/null 2>&1; then \
+		SDK_ROOT=$$(gcloud info --format="value(installation.sdk_root)" 2>/dev/null); \
+		if [ -n "$$SDK_ROOT" ] && [ -f "$$SDK_ROOT/bin/gke-gcloud-auth-plugin" ]; then \
+			echo "⚠️  gke-gcloud-auth-plugin found but not in PATH"; \
+			echo ""; \
+			echo "Add to your PATH by adding this to ~/.zshrc or ~/.bashrc:"; \
+			echo "  export PATH=\"\$$PATH:$$SDK_ROOT/bin\""; \
+			echo ""; \
+			echo "Then run: source ~/.zshrc (or source ~/.bashrc)"; \
+			echo ""; \
+			echo "Or continue - kubectl will work but may show warnings."; \
+		else \
+			echo ""; \
+			echo "❌ gke-gcloud-auth-plugin is not installed."; \
+			echo ""; \
+			echo "Install the GKE auth plugin:"; \
+			echo "  gcloud components install gke-gcloud-auth-plugin"; \
+			echo ""; \
+			echo "Or follow: https://cloud.google.com/kubernetes-engine/docs/how-to/cluster-access-for-kubectl#install_plugin"; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "✓ Prerequisites installed"
+	@echo ""
 	@echo "Getting kubectl credentials..."
 	@if [ ! -f terraform.tfvars ]; then \
 		echo "Error: terraform.tfvars not found. Please create it first."; \
@@ -124,4 +161,4 @@ connect:
 		--project $$GKE_PROJECT
 	@echo ""
 	@echo "Testing connection..."
-	kubectl get nodes
+	@kubectl get nodes
