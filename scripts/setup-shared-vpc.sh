@@ -43,6 +43,24 @@ fi
 
 print_info "VPC Host Project: $VPC_HOST_PROJECT"
 print_info "GKE Project: $GKE_PROJECT"
+echo ""
+
+# Check if single project mode
+if [ "$VPC_HOST_PROJECT" = "$GKE_PROJECT" ]; then
+    print_info "Single project mode detected!"
+    echo ""
+    echo "Both VPC and GKE are in the same project: $GKE_PROJECT"
+    echo "No Shared VPC configuration needed."
+    echo ""
+    print_info "You can proceed directly with:"
+    echo "  make init"
+    echo "  make apply"
+    echo ""
+    exit 0
+fi
+
+echo "Shared VPC mode detected (two different projects)"
+echo ""
 
 # Check if shared VPC is already enabled on host project
 print_info "Checking if Shared VPC is enabled on host project..."

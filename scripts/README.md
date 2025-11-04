@@ -1,28 +1,48 @@
 # Setup Scripts
 
-This directory contains helper scripts for setting up the GKE cluster with Shared VPC.
+This directory contains helper scripts for setting up the GKE cluster.
+
+## Deployment Modes
+
+This configuration supports two deployment modes:
+
+### Single Project Mode
+- VPC and GKE in the same project
+- Simpler setup, no Shared VPC configuration needed
+- Set both `gke_project_id` and `vpc_host_project_id` to the same value
+
+### Shared VPC Mode
+- VPC in a host project, GKE in a service project
+- Better for production with network isolation
+- Requires organization-level permissions
 
 ## Scripts
 
 ### 1. `setup-shared-vpc.sh`
 
-**Purpose:** Configures Shared VPC for the GKE cluster (regular users)
+**Purpose:** Configures Shared VPC for the GKE cluster (Shared VPC mode only)
 
-**When to use:** After creating `terraform.tfvars` and before running Terraform
+**When to use:**
+- Only for Shared VPC mode (two different projects)
+- Skip this for single project mode
+- Run after creating `terraform.tfvars` and before Terraform
 
 **Usage:**
 ```bash
-make setup
+make host-vpc-setup
 # or
 ./scripts/setup-shared-vpc.sh
 ```
 
 **What it does:**
-- Checks if Shared VPC is enabled on the host project
-- Attaches the GKE project as a service project
-- Verifies the configuration
+- Detects if you're using single project or shared VPC mode
+- For single project: exits with success message
+- For shared VPC:
+  - Checks if Shared VPC is enabled on the host project
+  - Attaches the GKE project as a service project
+  - Verifies the configuration
 
-**Required permissions:**
+**Required permissions (Shared VPC only):**
 - `roles/compute.xpnAdmin` on the VPC host project (if enabling Shared VPC)
 - `roles/resourcemanager.projectIamAdmin` on both projects
 
@@ -99,22 +119,36 @@ gcloud compute shared-vpc get-host-project search-and-reco
 
 ## Complete Workflow
 
-### If you have org-level permissions:
+### Single Project Mode (Simpler)
 
 ```bash
 # 1. Configure variables
 cp terraform.tfvars.example terraform.tfvars
 vim terraform.tfvars
+# Set both gke_project_id and vpc_host_project_id to the SAME value
+
+# 2. Deploy directly - no Shared VPC setup needed!
+make init
+make apply
+```
+
+### Shared VPC Mode - With Org Permissions
+
+```bash
+# 1. Configure variables
+cp terraform.tfvars.example terraform.tfvars
+vim terraform.tfvars
+# Set gke_project_id and vpc_host_project_id to DIFFERENT values
 
 # 2. Run setup (will enable Shared VPC and attach projects)
-make setup
+make host-vpc-setup
 
 # 3. Continue with Terraform
 make init
 make apply
 ```
 
-### If you DON'T have org-level permissions:
+### Shared VPC Mode - Without Org Permissions
 
 ```bash
 # 1. Configure variables
@@ -125,7 +159,7 @@ vim terraform.tfvars
 # Share: ./scripts/enable-shared-vpc-admin.sh
 
 # 3. Once enabled, attach the service project
-make setup
+make host-vpc-setup
 
 # 4. Continue with Terraform
 make init
